@@ -107,7 +107,7 @@ export default function Footer() {
                   Instagram
                 </a>
                 <a
-                  href="https://www.youtube.com/@MangoVillageResortsas"
+                  href="https://www.youtube.com/@MangoVillageResorts"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-1 text-sm text-white/90 hover:text-[#FFB61E]"
