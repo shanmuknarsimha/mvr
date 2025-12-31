@@ -1,9 +1,13 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-.mb_YTPPlayer,
-.YTPVideo {
-  object-fit: contain !important;
-  width: 100% !important;
-  height: 100% !important;
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply font-sans antialiased;
+  }
 }

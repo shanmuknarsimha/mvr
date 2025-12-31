@@ -1,89 +1,126 @@
-import { useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { Menu, X } from 'lucide-react';
-import logo from '../assets/logo.png';
+import { useEffect, useState } from "react"
+import { Menu, X } from "lucide-react"
+import logo from "../assets/logo.png"
 
 export default function Header() {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const location = useLocation();
+  const [scrolled, setScrolled] = useState(false)
+  const [open, setOpen] = useState(false)
 
-  const navLinks = [
-    { path: 'hero-video', label: 'Home' },
-    { path: 'about-us', label: 'About Us' },
-    { path: 'activities', label: 'Activities' },
-    { path: 'cottages', label: 'Cottages' },
-    { path: 'gallery', label: 'Gallery' },
-  ];
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 40)
+    }
+    window.addEventListener("scroll", handleScroll)
+    return () => window.removeEventListener("scroll", handleScroll)
+  }, [])
 
-  const isActive = (path: string) => location.pathname === path;
+  const navItems = ["Home", "Cottages", "Events", "Gallery", "About"]
 
   return (
-    <header className="sticky top-0 z-40 bg-white shadow-md">
-      <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-2 flex-shrink-0">
-          <img src={logo} className='h-12 w-12' alt="" />
-          <div className="sm:block">
-            <h1 className="text-lg font-serif font-bold text-[#2B6430]">Mango Village Resorts</h1>
-            <p className="text-xs text-[#8C5A2B]">A real time in nature</p>
-          </div>
-        </Link>
+    <>
+      {/* HEADER */}
+      <header
+        className={`fixed top-0 left-0 w-full z-50 transition-all duration-500 ${
+          scrolled ? "bg-emerald-800 shadow-md" : "bg-transparent"
+        }`}
+      >
+        <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-20 h-20 flex items-center justify-between">
 
-        <nav className="hidden lg:flex items-center gap-1">
-          {navLinks.map((link) => (
+          {/* LOGO */}
+          <img
+            src={logo}
+            alt="Mango Village Resorts"
+            className="h-16 w-auto"
+          />
+
+          {/* DESKTOP NAVIGATION */}
+          <nav className="hidden md:flex items-center gap-12">
+            {navItems.map((item) => (
+              <a
+                key={item}
+                href={`#${item.toLowerCase()}`}
+                className="
+                  text-[13px]
+                  font-serif
+                  uppercase
+                  font-medium
+                  tracking-[0.18em]
+                  text-white
+                  transition-colors
+                  duration-300
+                  hover:text-[#d4af37]
+                "
+              >
+                {item}
+              </a>
+            ))}
+          </nav>
+
+          {/* MOBILE MENU BUTTON */}
+          <button
+            onClick={() => setOpen(true)}
+            className="md:hidden text-white"
+            aria-label="Open menu"
+          >
+            <Menu className="w-7 h-7" />
+          </button>
+        </div>
+      </header>
+
+      {/* OVERLAY */}
+      <div
+        onClick={() => setOpen(false)}
+        className={`fixed inset-0 bg-black/50 backdrop-blur-sm z-40 transition-opacity duration-300 ${
+          open ? "opacity-100 visible" : "opacity-0 invisible"
+        }`}
+      />
+
+      {/* SIDEBAR */}
+      <aside
+        className={`fixed top-0 right-0 h-full w-[80%] max-w-sm bg-emerald-900 z-50 transform transition-transform duration-500 ${
+          open ? "translate-x-0" : "translate-x-full"
+        }`}
+      >
+        {/* SIDEBAR HEADER */}
+        <div className="h-20 px-6 flex items-center justify-between border-b border-white/10">
+          <img
+            src={logo}
+            alt="Mango Village Resorts"
+            className="h-12"
+          />
+          <button
+            onClick={() => setOpen(false)}
+            className="text-white"
+            aria-label="Close menu"
+          >
+            <X className="w-6 h-6" />
+          </button>
+        </div>
+
+        {/* SIDEBAR NAV */}
+        <nav className="flex flex-col px-6 pt-10 gap-8">
+          {navItems.map((item) => (
             <a
-              href={'#'+link.path}
-              className={`px-4 py-2 rounded-lg transition-all duration-300 font-medium ${
-                isActive(link.path)
-                  ? 'bg-[#FFB61E] text-[#2B6430]'
-                  : 'text-[#2B6430] hover:bg-[#FFB61E]'
-              }`}
+              key={item}
+              href={`#${item.toLowerCase()}`}
+              onClick={() => setOpen(false)}
+              className="
+                text-lg
+                font-serif
+                uppercase
+                font-semibold
+                tracking-[0.14em]
+                text-white
+                transition-colors
+                duration-300
+                hover:text-[#d4af37]
+              "
             >
-              {link.label}
+              {item}
             </a>
           ))}
         </nav>
-
-        <button
-          onClick={() => setIsMenuOpen(!isMenuOpen)}
-          className="lg:hidden p-2 hover:bg-[#FFF7E3] rounded-lg transition-colors"
-          aria-label="Toggle menu"
-        >
-          {isMenuOpen ? (
-            <X className="w-6 h-6 text-[#2B6430]" />
-          ) : (
-            <Menu className="w-6 h-6 text-[#2B6430]" />
-          )}
-        </button>
-      </div>
-
-      {isMenuOpen && (
-        <nav className="lg:hidden bg-[#FFF7E3] border-t-2 border-[#2B6430]/10">
-          <div className="max-w-7xl mx-auto px-6 py-4 space-y-2">
-            {navLinks.map((link) => (
-              <a
-                href={'#'+link.path}
-                onClick={() => setIsMenuOpen(false)}
-                className={`block px-4 py-3 rounded-lg transition-all duration-300 font-medium ${
-                  isActive(link.path)
-                    ? 'bg-[#FFB61E] text-[#2B6430]'
-                    : 'text-[#2B6430] hover:bg-white'
-                }`}
-              >
-                {link.label}
-              </a>
-            ))}
-            <a
-              href="https://wa.me/919876543210"
-              target="_blank"
-              rel="noopener noreferrer"
-              onClick={() => setIsMenuOpen(false)}
-              className="block w-full bg-[#FFB61E] hover:bg-[#ff9d00] text-[#2B6430] font-bold px-4 py-3 rounded-lg transition-all duration-300 text-center"
-            >
-              Book on WhatsApp
-            </a>
-          </div>
-        </nav>
-      )}
-    </header>
-  );
+      </aside>
+    </>
+  )
 }

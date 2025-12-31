@@ -1,174 +1,129 @@
-import { useState } from "react";
-import {
-  Image as ImageIcon,
-  PlayCircle,
-  X,
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react"
+import { useState, useRef } from "react"
 
-// Auto-import ALL images from folder
+// AUTO-IMPORT ALL IMAGES
 const imageModules = import.meta.glob(
-  "/src/assets/gallery/*.{jpg,jpeg,png,webp,avif}",
+  "../assets/gallery/exp/*.{jpg,jpeg,png,webp}",
   { eager: true }
-);
+)
 
-type MediaItem = {
-  type: "image" | "video";
-  src: string; // image URL or youtube embed URL
-  label?: string;
-};
-
-// Convert imported assets → array of image items
-const imageItems: MediaItem[] = Object.values(imageModules).map(
-  (mod: any, idx) => ({
-    type: "image",
-    src: mod.default,
-    label: `Gallery Image ${idx + 1}`,
-  })
-);
-
-// 🎬 Add YouTube links here
-const videoItems: MediaItem[] = [
-  {
-    type: "video",
-    src: "https://www.youtube.com/embed/XBhEN5hU4z0",
-    label: "Resort Walkthrough",
-  },
-  // { type: "video", src: "https://www.youtube.com/embed/ANOTHER_ID", label: "Pool Highlights" }
-];
-
-// Merge videos + images
-const mediaItems: MediaItem[] = [...videoItems, ...imageItems];
+const images = Object.values(imageModules).map(
+  (mod: any) => mod.default
+)
 
 export default function Gallery() {
-  const [activeIndex, setActiveIndex] = useState<number | null>(null);
+  const [active, setActive] = useState(0)
 
-  const openLightbox = (index: number) => setActiveIndex(index);
-  const closeLightbox = () => setActiveIndex(null);
+  // 👉 SWIPE REFS
+  const touchStartX = useRef<number | null>(null)
+  const touchEndX = useRef<number | null>(null)
 
-  const prev = (e: any) => {
-    e.stopPropagation();
-    if (activeIndex === null) return;
-    setActiveIndex((activeIndex - 1 + mediaItems.length) % mediaItems.length);
-  };
+  const minSwipeDistance = 50
 
-  const next = (e: any) => {
-    e.stopPropagation();
-    if (activeIndex === null) return;
-    setActiveIndex((activeIndex + 1) % mediaItems.length);
-  };
+  const onTouchStart = (e: React.TouchEvent) => {
+    touchEndX.current = null
+    touchStartX.current = e.targetTouches[0].clientX
+  }
 
-  const activeItem = activeIndex !== null ? mediaItems[activeIndex] : null;
+  const onTouchMove = (e: React.TouchEvent) => {
+    touchEndX.current = e.targetTouches[0].clientX
+  }
+
+  const onTouchEnd = () => {
+    if (!touchStartX.current || !touchEndX.current) return
+
+    const distance = touchStartX.current - touchEndX.current
+
+    if (distance > minSwipeDistance) {
+      setActive(active === images.length - 1 ? 0 : active + 1)
+    }
+
+    if (distance < -minSwipeDistance) {
+      setActive(active === 0 ? images.length - 1 : active - 1)
+    }
+  }
+
+  if (!images.length) return null
 
   return (
-    <section className="py-20 bg-white" id="gallery">
-      <div className="max-w-7xl mx-auto px-6">
-        <h2 className="text-4xl md:text-5xl font-serif font-bold text-center text-[#2B6430] mb-4">
-          📸 Gallery
-        </h2>
+    <section id="gallery" className="bg-stone-50 py-24 sm:py-32">
+      <div className="max-w-7xl mx-auto px-6 lg:px-12">
 
-        <p className="text-center text-xl text-[#8C5A2B] mb-12">
-          Enjoy moments from around our resort:
-        </p>
+        {/* MAIN LAYOUT */}
+        <div className="grid grid-cols-1 lg:grid-cols-[420px_1fr] gap-12 items-stretch">
 
-        {/* GRID GALLERY */}
-        <div className="grid grid-cols-3 lg:grid-cols-4 gap-6">
-          {mediaItems.map((item, index) => (
+          {/* LEFT CONTENT */}
+          <div className="bg-white rounded-3xl border border-stone-200 p-10 flex flex-col justify-center">
+            <h2 className="font-serif text-4xl text-primary tracking-wide mb-6 leading-tight">
+              Timeless<br />Moments
+            </h2>
+
+            <p className="text-gray-600 leading-relaxed max-w-sm">
+              Wander through scenes of quiet luxury — sunlit courtyards,
+              heritage-inspired architecture, lush gardens, and serene
+              retreats where nature and nostalgia exist in perfect harmony.
+            </p>
+          </div>
+
+          {/* RIGHT IMAGE (SWIPE + MOBILE ARROWS) */}
+          <div
+            className="relative touch-pan-y"
+            onTouchStart={onTouchStart}
+            onTouchMove={onTouchMove}
+            onTouchEnd={onTouchEnd}
+          >
+            <img
+              src={images[active]}
+              alt="Luxury nature retreat"
+              className="w-full h-full rounded-3xl object-cover aspect-[16/10]"
+            />
+
+            {/* MOBILE LEFT ARROW */}
             <button
-              key={index}
-              type="button"
-              onClick={() => openLightbox(index)}
-              className="relative overflow-hidden shadow-lg group cursor-pointer bg-black"
+              onClick={() =>
+                setActive(active === 0 ? images.length - 1 : active - 1)
+              }
+              className="absolute -left-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white/80 backdrop-blur border border-[#d4af37] text-[#d4af37] flex items-center justify-center hover:bg-[#d4af37] hover:text-white transition"
             >
-              {/* Fixed 16:9 ratio box */}
-              <div className="w-full aspect-[16/9] relative">
-                {item.type === "image" ? (
-                  <img
-                    src={item.src}
-                    loading="lazy"
-                    alt={item.label}
-                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
-                  />
-                ) : (
-                  <div className="absolute inset-0 w-full h-full">
-                    <iframe
-                      src={`${item.src}?mute=1&controls=0&modestbranding=1&rel=0`}
-                      className="w-full h-full object-cover pointer-events-none"
-                      loading="lazy"
-                    />
-                    </div>
-                )}
-              </div>
-
-              <div className="absolute inset-0 bg-black/10 group-hover:bg-black/30 transition-all" />
+              <ChevronLeft className="w-5 h-5 text-stone-700" />
             </button>
-          ))}
-        </div>
 
-        <p className="text-center text-sm text-[#8C5A2B] mt-6 italic">
-          Tap any media to view in fullscreen.
-        </p>
-      </div>
-
-      {/* FULLSCREEN LIGHTBOX */}
-      {activeItem && (
-        <div
-          onClick={closeLightbox}
-          className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center"
-        >
-          {/* Close */}
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              closeLightbox();
-            }}
-            className="absolute top-4 right-4 p-2 bg-black/60 rounded-full text-white hover:bg-black/80"
-          >
-            <X className="w-6 h-6" />
-          </button>
-
-          {/* Prev */}
-          <button
-            onClick={prev}
-            className="absolute left-4 p-2 bg-black/60 rounded-full text-white hover:bg-black/80"
-          >
-            <ChevronLeft className="w-7 h-7" />
-          </button>
-
-          {/* Next */}
-          <button
-            onClick={next}
-            className="absolute right-4 p-2 bg-black/60 rounded-full text-white hover:bg-black/80"
-          >
-            <ChevronRight className="w-7 h-7" />
-          </button>
-
-          {/* Content */}
-          <div className="max-w-5xl w-full px-4">
-            {activeItem.type === "image" ? (
-              <img
-                src={activeItem.src}
-                alt={activeItem.label}
-                className="w-full max-h-[80vh] object-contain rounded-xl"
-              />
-            ) : (
-              <div className="relative w-full" style={{ paddingTop: "56.25%" }}>
-                <iframe
-                  src={`${activeItem.src}?autoplay=1&mute=1&controls=1&modestbranding=1&rel=0`}
-                  className="absolute inset-0 w-full h-full rounded-xl"
-                  allow="autoplay; encrypted-media; fullscreen"
-                />
-              </div>
-            )}
-            {activeItem.label && (
-              <p className="text-center text-white/80 mt-4 text-sm">
-                {activeItem.label}
-              </p>
-            )}
+            {/* MOBILE RIGHT ARROW */}
+            <button
+              onClick={() =>
+                setActive(active === images.length - 1 ? 0 : active + 1)
+              }
+              className="absolute -right-4 top-1/2 -translate-y-1/2 z-10 w-10 h-10 rounded-full bg-white/80 backdrop-blur border border-[#d4af37] text-[#d4af37] flex items-center justify-center hover:bg-[#d4af37] hover:text-white transition"
+            >
+              <ChevronRight className="w-5 h-5 text-stone-700" />
+            </button>
           </div>
         </div>
-      )}
+
+        {/* THUMBNAILS (ALWAYS VISIBLE – MOBILE + DESKTOP) */}
+        <div className="mt-10 flex gap-4 overflow-x-scroll lg:overflow-x-auto lg:justify-center">
+
+          {/* CIRCLE THUMBNAILS */}
+          <div className="flex gap-3 max-w-[70vw] scrollbar-hide">
+            {images.map((img, i) => (
+              <button
+                key={i}
+                onClick={() => setActive(i)}
+                className={`min-w-16 min-h-16 max-w-16 max-h-16 rounded-full overflow-hidden border-2 transition ${
+                  active === i ? "border-[#c6a75e]" : "border-transparent"
+                }`}
+              >
+                <img
+                  src={img}
+                  alt={`Thumbnail ${i + 1}`}
+                  className="w-full h-full object-cover"
+                />
+              </button>
+            ))}
+          </div>
+        </div>
+
+      </div>
     </section>
-  );
+  )
 }
